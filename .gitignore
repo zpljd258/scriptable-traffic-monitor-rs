@@ -1,0 +1,5 @@
+target/
+scriptable-traffic-monitor
+*.log
+*.log.*
+data/

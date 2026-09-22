@@ -1,0 +1,16 @@
+#!/sbin/openrc-run
+
+supervisor=supervise-daemon
+name="scriptable-traffic-monitor"
+description="Scriptable Traffic Monitor (Rust Edition)"
+
+command="/usr/local/bin/scriptable-traffic-monitor"
+command_args="${TRAFFIC_MONITOR_OPTS}"
+
+output_log="/var/log/scriptable-traffic-monitor.log"
+error_log="/var/log/scriptable-traffic-monitor.err"
+
+depend() {
+	need net
+	after firewall
+}

@@ -1,0 +1,10 @@
+# Configuration for Scriptable Traffic Monitor (OpenRC)
+export API_TOKEN="your_secret_token"
+export API_PORT="5000"
+export ENABLE_API="True"
+export TRAFFIC_DIRECTION="outbound"
+export MONTHLY_TRAFFIC_GB="1024"
+export RESET_DAY="1"
+export NETWORK_INTERFACE="eth0"
+export TRAFFIC_DATA_FILE="/var/lib/scriptable-traffic-monitor/outbound_traffic.json"
+export LOG_FILE="/var/log/scriptable-traffic-monitor.log"

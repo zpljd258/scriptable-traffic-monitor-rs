@@ -1,0 +1,18 @@
+services:
+  scriptable-traffic-monitor:
+    image: scriptable-traffic-monitor:latest
+    build: .
+    environment:
+      API_TOKEN: your_secret_token  # ⚠️ 必须修改: 设置一个安全的 API Token
+      API_PORT: 5000              # API 监听的端口
+      ENABLE_API: "True"          # 是否启用 API (True/False)
+      TRAFFIC_DIRECTION: outbound  # 流量方向: outbound (出站) 或 bidirectional (双向)
+      MONTHLY_TRAFFIC_GB: 200     # 每月流量上限 (GB)
+      RESET_DAY: 1              # 每月流量重置日 (1-31)
+      NETWORK_INTERFACE: eth0    # 统计网卡名称，默认 eth0
+    volumes:
+      - /opt/docker/scriptable-trafficmonitor/data:/data  # 持久化存储流量数据
+      - /etc/hostname:/etc/host_hostname:ro    # 挂载宿主机主机名
+    restart: always
+    container_name: scriptable-traffic-monitor
+    network_mode: host

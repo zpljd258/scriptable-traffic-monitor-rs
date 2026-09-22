@@ -1,0 +1,23 @@
+[Unit]
+Description=Scriptable Traffic Monitor (Rust Edition)
+After=network.target
+
+[Service]
+Type=simple
+User=root
+EnvironmentFile=-/etc/default/scriptable-traffic-monitor
+Environment=API_TOKEN=your_secret_token
+Environment=API_PORT=5000
+Environment=ENABLE_API=True
+Environment=TRAFFIC_DIRECTION=outbound
+Environment=MONTHLY_TRAFFIC_GB=1024
+Environment=RESET_DAY=1
+Environment=NETWORK_INTERFACE=eth0
+Environment=TRAFFIC_DATA_FILE=/var/lib/scriptable-traffic-monitor/outbound_traffic.json
+Environment=LOG_FILE=/var/log/scriptable-traffic-monitor.log
+ExecStart=/usr/local/bin/scriptable-traffic-monitor
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
