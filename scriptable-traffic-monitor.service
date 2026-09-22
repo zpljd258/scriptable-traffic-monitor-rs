@@ -15,6 +15,17 @@ Environment=RESET_DAY=1
 Environment=NETWORK_INTERFACE=eth0
 Environment=TRAFFIC_DATA_FILE=/var/lib/scriptable-traffic-monitor/outbound_traffic.json
 Environment=LOG_FILE=/var/log/scriptable-traffic-monitor.log
+# Telegram 通知配置（可选）
+# Environment=TELEGRAM_BOT_TOKEN=123456789:ABCdefGHIjklMNOpqrsTUVwxyz
+# Environment=TELEGRAM_CHAT_ID=123456789
+# Environment=THRESHOLDS=80,90,95
+# Environment=DAILY_REPORT=false
+# Environment=WEEKLY_REPORT=false
+# Environment=REPORT_HOUR=9
+# 流量超标保护与新周期自动拉起恢复（可选）
+# Environment=LIMIT_THRESHOLD=95
+# Environment=STOP_COMMAND=systemctl stop hy2
+# Environment=START_COMMAND=systemctl start hy2
 ExecStart=/usr/local/bin/scriptable-traffic-monitor
 Restart=always
 RestartSec=5

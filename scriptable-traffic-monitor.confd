@@ -8,3 +8,16 @@ export RESET_DAY="1"
 export NETWORK_INTERFACE="eth0"
 export TRAFFIC_DATA_FILE="/var/lib/scriptable-traffic-monitor/outbound_traffic.json"
 export LOG_FILE="/var/log/scriptable-traffic-monitor.log"
+
+# Telegram 通知配置（可选）
+# export TELEGRAM_BOT_TOKEN="123456789:ABCdefGHIjklMNOpqrsTUVwxyz"
+# export TELEGRAM_CHAT_ID="123456789"
+# export THRESHOLDS="80,90,95"
+# export DAILY_REPORT="false"
+# export WEEKLY_REPORT="false"
+# export REPORT_HOUR="9"
+
+# 流量超标保护与新周期自动拉起恢复（可选）
+# export LIMIT_THRESHOLD="95"
+# export STOP_COMMAND="rc-service hy2 stop"
+# export START_COMMAND="rc-service hy2 start"

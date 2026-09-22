@@ -3,3 +3,5 @@ scriptable-traffic-monitor
 *.log
 *.log.*
 data/
+*.tar.gz
+sha256sums.txt

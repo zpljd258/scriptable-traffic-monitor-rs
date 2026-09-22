@@ -10,6 +10,14 @@ services:
       MONTHLY_TRAFFIC_GB: 200     # 每月流量上限 (GB)
       RESET_DAY: 1              # 每月流量重置日 (1-31)
       NETWORK_INTERFACE: eth0    # 统计网卡名称，默认 eth0
+      # TELEGRAM_BOT_TOKEN: "123456789:ABCdefGHIjklMNOpqrsTUVwxyz" # 可选: Telegram 机器人 Token
+      # TELEGRAM_CHAT_ID: "123456789"                               # 可选: Telegram Chat ID
+      # THRESHOLDS: "80,90,95"                                      # 可选: 阈值告警百分比
+      # DAILY_REPORT: "false"                                       # 可选: 每日定时报告
+      # WEEKLY_REPORT: "false"                                      # 可选: 每周定时报告
+      # LIMIT_THRESHOLD: 95                                         # 可选: 流量超标保护百分比
+      # STOP_COMMAND: "docker stop hy2"                             # 可选: 达到阈值后执行的关闭命令
+      # START_COMMAND: "docker start hy2"                           # 可选: 新账单周期自动执行的启动命令
     volumes:
       - /opt/docker/scriptable-trafficmonitor/data:/data  # 持久化存储流量数据
       - /etc/hostname:/etc/host_hostname:ro    # 挂载宿主机主机名

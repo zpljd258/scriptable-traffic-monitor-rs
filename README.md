@@ -1,29 +1,41 @@
 # Scriptable Traffic Monitor (Rust Edition) 🦀⚡
 
 [![GitHub Release](https://img.shields.io/github/v/release/zpljd258/scriptable-traffic-monitor-rs)](https://github.com/zpljd258/scriptable-traffic-monitor-rs/releases)
-[![Original Python Version](https://img.shields.io/badge/Original%20Repo-Python%20Version-blue)](https://github.com/zpljd258/scriptable-TrafficMonitor)
+[![Original Scriptable Repo](https://img.shields.io/badge/Original%20Repo-Scriptable%20Widget-blue)](https://github.com/zpljd258/scriptable-TrafficMonitor)
+[![Original Telegram Bot Repo](https://img.shields.io/badge/Original%20Repo-Telegram%20Bot-blue)](https://github.com/zpljd258/traffic-monitor)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![Memory Usage](https://img.shields.io/badge/Memory%20RSS-%3C1.8MB-success)](https://github.com/zpljd258/scriptable-traffic-monitor-rs)
 [![Docker Image Size](https://img.shields.io/badge/Docker%20Image-10.6MB-brightgreen)](https://github.com/zpljd258/scriptable-traffic-monitor-rs)
 
-> 🔗 **原项目关联**：本项目是原 Python 版本 **[zpljd258/scriptable-TrafficMonitor](https://github.com/zpljd258/scriptable-TrafficMonitor)** 的全新 **Rust 重构版本**。在 100% 保持原版 API 协议、数据结构与 iOS Scriptable 小组件兼容的前提下，针对低配 VPS 实现了极致的内存优化（常驻内存从 36MB 降至 1.4MB）。
+> 🔗 **双仓库融合重构**：本项目是原 Python 版本 **[zpljd258/scriptable-TrafficMonitor](https://github.com/zpljd258/scriptable-TrafficMonitor)**（iOS 桌面小组件）与 **[zpljd258/traffic-monitor](https://github.com/zpljd258/traffic-monitor)**（Telegram 告警机器人）的**合二为一全新 Rust 重构版**。
+> 
+> 在 100% 保持小组件 API 兼容的同时，集成了 Telegram 阈值告警、定期日报/周报、账单日重置推送，并独创了**流量超标自动执行自定义关闭命令（如停止代理服务）并在下个账单日自动执行启动命令拉起恢复**的熔断保护机制！常驻物理内存仅需 **~1.4MB**（较原两套 Python 服务节省 95% 以上）。
 
 ---
 
 ## 📌 这是什么？解决什么问题？
 
-很多云厂商（如**阿里云 CDT** 提供每月 200GB 免费出站流量，腾讯云轻量、Oracle Cloud、搬瓦工等 VPS 均有固定的月流量包配额）。一旦流量超标，往往会产生昂贵账单或遭遇限速断网。
+很多云厂商（如**阿里云 CDT** 每月 200GB 免费出站流量，腾讯云轻量、Oracle Cloud、搬瓦工等 VPS 均有固定月配额）。一旦流量超标，往往会产生昂贵账单或遭遇高额扣费。
 
-**Scriptable Traffic Monitor** 是一款专门针对**流量计费云服务器**设计的监控服务：
+**Scriptable Traffic Monitor** 是一款专为**流量计费云服务器**打造的全功能监控防护卫士：
 
-1. **服务端监控守护**：在 Linux 服务器后台静默运行，精准读取 Linux 内核底层网卡流量计数，按月累加统计，并在到达指定重置日时自动归零。
-2. **安全 API 暴露**：对外暴露携带 Token 认证的轻量 HTTP API，供客户端随时拉取最新的月度用量。
-3. **iPhone / iPad 桌面小组件联动**：配合本项目配套的 iOS **Scriptable** 脚本（[`scriptable.js`](./scriptable.js)），你可以在苹果手机的主屏幕或负一屏添加优雅美观的桌面小组件，**一眼掌握多台 VPS 的主机名、公网 IP、本月已用流量、总配额以及百分比彩色进度条**！
+1. **底层物理网卡静默守护**：直接读取 Linux 内核网卡真实物理流量计数，按月精准累加，每月账单日自动清零。
+2. **多端联动展示 (iOS Scriptable 小组件)**：对外暴露携带 Token 认证的极速 HTTP API，配合配套脚本（[`scriptable.js`](./scriptable.js)），在 iPhone / iPad 负一屏与桌面上优雅聚合展示多台 VPS 的实时用量与彩色进度条。
+3. **Telegram 机器人全自动通知**：到达阈值（如 80%、90%、95%）即时推送告警、每日/每周定时发送用量报告、新账单周期开始时发送重置总结。
+4. **自定义服务熔断与次月自动复活**：当流量达到指定红线阈值（如 95%）时，自动执行用户配置的关闭命令（如 `systemctl stop hy2` 或 `docker stop vpn`）防止天价账单产生；到了下个月账单日，自动执行启动命令恢复服务并归零计数，实现真正全无人值守。
 
 ---
 
 ## ✨ 核心功能
 
+*   **🤖 Telegram 机器人全场景通知**：
+    *   **多阶阈值告警**：自定义多级用量阈值（如 `THRESHOLDS=80,90,95`），达到对应比例立即推送 Telegram HTML 富文本告警，当月绝不重复骚扰。
+    *   **定期汇报（日报 / 周报）**：支持开启每日（`DAILY_REPORT`）或每周（`WEEKLY_REPORT`）在指定整点（`REPORT_HOUR`）发送当前配额用量概况。
+    *   **服务启动与重置归档通知**：服务启动即报、每月重置日自动发送上月流量归档与清零汇报。
+*   **🛡️ 流量超标保护与新账单周期自动拉起恢复**：
+    *   **用户自定义关闭命令**：达到红线阈值（如 `LIMIT_THRESHOLD=95`）时，自动执行用户配置的 Shell 命令（如 `systemctl stop hy2` 或 `docker stop vpn`），无需粗暴掐断整机网络，保护 SSH 远程管理不失联。
+    *   **新周期自动拉起复活**：在账单日到达清零流量时，程序自动执行 `START_COMMAND`（如 `systemctl start hy2`），无缝恢复网络服务，全流程自动化闭环。
+    *   **跨重启状态记忆**：断网/关服动作状态持久化存储于 JSON 中，即使服务器中途重启也不会遗漏恢复。
 *   **📱 优雅的 iOS 小组件展示**：
     *   **多服务器聚合**：支持单个小组件同时监控多台服务器（推荐 2 ~ 6 台，最多可支持 12 台）。
     *   **Apple 原生设计风格**：精心设计的进度条与排版，支持暗黑模式，信息清晰不拥挤。
@@ -240,19 +252,40 @@ docker compose up -d
 
 ## ⚙️ 环境变量配置说明
 
+### 基础统计与 HTTP API 配置
 | 环境变量 | 默认值 | 详细说明 |
 | :--- | :--- | :--- |
 | `API_TOKEN` | `default_token` | **必须修改**。访问 `/traffic?token=...` 时必须携带的安全认证令牌。 |
 | `API_PORT` | `5000` | HTTP Web API 监听的端口。 |
-| `ENABLE_API` | `True` | 是否启动 HTTP 服务；若设为 `"False"`，则仅在后台每 60 秒持久化记录流量，不开放端口。 |
+| `ENABLE_API` | `True` | 是否启动 HTTP 服务；若设为 `"False"`，则仅在后台每 60 秒持久化记录流量与处理 Telegram 通知。 |
 | `TRAFFIC_DIRECTION` | `outbound` | 流量统计方向：`outbound`（仅计算出站，如阿里云 CDT 计费）或 `bidirectional`（计算出站+入站双向）。 |
 | `MONTHLY_TRAFFIC_GB` | `1024` | 每月可用流量总额度（单位：GB）。 |
 | `RESET_DAY` | `1` | 每月流量统计重置的日期（1 ~ 31）。 |
 | `NETWORK_INTERFACE` | `eth0` | 统计的物理网卡名称，多网卡服务器请填写对应公网网卡名（如 `ens5`）。 |
-| `SERVER_HOSTNAME` | 从系统读取 | 可选。自定义小组件上显示的主机名称（别名 `CUSTOM_HOSTNAME`），适合单机多网卡多实例区分。 |
+| `SERVER_HOSTNAME` | 从系统读取 | 可选。自定义小组件与 Telegram 消息中显示的主机名称（别名 `CUSTOM_HOSTNAME`）。 |
 | `PUBLIC_IP` | 自动探测 | 可选。手动固定显示的公网 IPv4 地址；未填时程序会自动多源探测并缓存。 |
 | `TRAFFIC_DATA_FILE` | `/data/outbound_traffic.json` | 流量数据存储文件路径，容器部署请确保挂载卷对齐。 |
 | `LOG_FILE` | `traffic_monitor.log` | 本地日志路径（内置 2MB 自动切分备份）。 |
+
+### Telegram 机器人通知配置（可选）
+| 环境变量 | 默认值 | 详细说明 |
+| :--- | :--- | :--- |
+| `TELEGRAM_BOT_TOKEN` | 无 | Telegram Bot Token（向 [@BotFather](https://t.me/BotFather) 申请获得）。未配置则不启用 Telegram 推送。 |
+| `TELEGRAM_CHAT_ID` | 无 | 接收推送通知的 Telegram 用户 ID 或群组 ID。 |
+| `TELEGRAM_API_URL` | `https://api.telegram.org` | Telegram API 反代地址（国内机器可填自建反代如 `https://tg-proxy.example.com`）。 |
+| `THRESHOLDS` | `80,90,95` | 触发告警的用量百分比列表（英文逗号隔开）。当月达到后仅发送一次，避免刷屏。 |
+| `DAILY_REPORT` | `false` | 是否开启每日用量报告（设为 `true` 开启）。 |
+| `WEEKLY_REPORT` | `false` | 是否开启每周用量报告（设为 `true` 开启）。 |
+| `REPORT_HOUR` | `9` | 定期报告每日发送的整点时间（0 ~ 23，默认早晨 9:00）。 |
+| `NOTIFY_ON_STARTUP` | `true` | 服务启动时是否发送初始化通知（展示当前机器名、IP、月配额）。 |
+| `NOTIFY_ON_RESET` | `true` | 到达账单重置日时是否发送上月流量用量总结通知。 |
+
+### 流量超标保护与新周期自动拉起（可选）
+| 环境变量 | 默认值 | 详细说明 |
+| :--- | :--- | :--- |
+| `LIMIT_THRESHOLD` | `0` | 触发保护动作的红线用量百分比（如 `95` 或 `98`，单位 %；设为 `0` 表示禁用）。 |
+| `STOP_COMMAND` | 无 | 达到红线阈值后自动执行的关闭命令（如 `systemctl stop hy2` 或 `docker stop vpn`）。 |
+| `START_COMMAND` | 无 | 到达新账单周期（重置日）清零后自动执行的拉起恢复命令（如 `systemctl start hy2`）。 |
 
 ---
 
