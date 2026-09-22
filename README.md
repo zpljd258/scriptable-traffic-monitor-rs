@@ -182,6 +182,28 @@ rc-service scriptable-traffic-monitor status
 
 ---
 
+### 💡 进阶技巧：单机多网卡 / 多 IP 双端口独立监控
+
+部分云服务器配有多张弹性网卡（ENI），每张网卡拥有独立的内网与公网 IP（如 `ens5` 和 `ens6`）。此时可在一台机器上启动两个服务实例，分别监听不同端口（例如 5000 与 5001）进行独立统计：
+
+1. **创建实例 1 服务 (`scriptable-traffic-monitor-ens5.service`)**：
+   - `API_PORT=5000`
+   - `NETWORK_INTERFACE=ens5`
+   - `SERVER_HOSTNAME=Server-IP1`
+   - `PUBLIC_IP=198.51.100.1`
+   - `TRAFFIC_DATA_FILE=/var/lib/scriptable-traffic-monitor/outbound_traffic_ens5.json`
+
+2. **创建实例 2 服务 (`scriptable-traffic-monitor-ens6.service`)**：
+   - `API_PORT=5001`
+   - `NETWORK_INTERFACE=ens6`
+   - `SERVER_HOSTNAME=Server-IP2`
+   - `PUBLIC_IP=198.51.100.2`
+   - `TRAFFIC_DATA_FILE=/var/lib/scriptable-traffic-monitor/outbound_traffic_ens6.json`
+
+在 iOS Scriptable 小组件的 `servers` 数组中同时添加 `5000` 和 `5001` 两个 URL，即可在主屏幕上分别展示两张网卡的流量进度卡片！两个 Rust 实例合并常驻物理内存**不到 2.5MB**。
+
+---
+
 ### 方案三：使用 Docker Compose 部署
 
 如果你更习惯使用 Docker 容器纳管：
@@ -226,7 +248,8 @@ docker compose up -d
 | `TRAFFIC_DIRECTION` | `outbound` | 流量统计方向：`outbound`（仅计算出站，如阿里云 CDT 计费）或 `bidirectional`（计算出站+入站双向）。 |
 | `MONTHLY_TRAFFIC_GB` | `1024` | 每月可用流量总额度（单位：GB）。 |
 | `RESET_DAY` | `1` | 每月流量统计重置的日期（1 ~ 31）。 |
-| `NETWORK_INTERFACE` | `eth0` | 统计的物理网卡名称，多网卡服务器请填写对应公网网卡名。 |
+| `NETWORK_INTERFACE` | `eth0` | 统计的物理网卡名称，多网卡服务器请填写对应公网网卡名（如 `ens5`）。 |
+| `SERVER_HOSTNAME` | 从系统读取 | 可选。自定义小组件上显示的主机名称（别名 `CUSTOM_HOSTNAME`），适合单机多网卡多实例区分。 |
 | `PUBLIC_IP` | 自动探测 | 可选。手动固定显示的公网 IPv4 地址；未填时程序会自动多源探测并缓存。 |
 | `TRAFFIC_DATA_FILE` | `/data/outbound_traffic.json` | 流量数据存储文件路径，容器部署请确保挂载卷对齐。 |
 | `LOG_FILE` | `traffic_monitor.log` | 本地日志路径（内置 2MB 自动切分备份）。 |

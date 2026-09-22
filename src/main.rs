@@ -22,6 +22,7 @@ pub struct Config {
     pub traffic_data_file: String,
     pub log_file: String,
     pub public_ip: Option<String>,
+    pub server_hostname: Option<String>,
 }
 
 impl Config {
@@ -66,6 +67,12 @@ impl Config {
             .map(|s| s.trim().to_string())
             .filter(|s| !s.is_empty());
 
+        let server_hostname = std::env::var("SERVER_HOSTNAME")
+            .or_else(|_| std::env::var("CUSTOM_HOSTNAME"))
+            .ok()
+            .map(|s| s.trim().to_string())
+            .filter(|s| !s.is_empty());
+
         Self {
             traffic_direction,
             monthly_traffic_gb,
@@ -77,6 +84,7 @@ impl Config {
             traffic_data_file,
             log_file,
             public_ip,
+            server_hostname,
         }
     }
 }
@@ -274,6 +282,11 @@ impl AppState {
     }
 
     pub fn get_hostname(&self) -> String {
+        // 0. 优先从环境变量 SERVER_HOSTNAME / CUSTOM_HOSTNAME 读取
+        if let Some(ref custom) = self.config.server_hostname {
+            return custom.clone();
+        }
+
         // 1. 优先从 /etc/host_hostname 读取
         if let Ok(content) = fs::read_to_string("/etc/host_hostname") {
             let trimmed = content.trim();
