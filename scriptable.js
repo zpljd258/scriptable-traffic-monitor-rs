@@ -1,7 +1,7 @@
 // Traffic Monitor 27 for Scriptable
 // Designed for iPhone/iPad widgets with high-density multi-server traffic monitoring.
-// Visual language: iOS 27 Liquid Glass — translucent layered glass cards, specular
-// rims, aurora backgrounds, glossy rings and capsule-shaped controls.
+// Visual language: iOS 27 frosted glass — milky, matte translucent panels with soft
+// hairline edges over a diffused, blurred-looking backdrop; no glossy highlights.
 // Current server API: {baseURL}/traffic?token=TOKEN
 // baseURL preserves the configured scheme exactly (http:// or https://).
 // API fields: hostname, ip, max_traffic_gb, total_usage_gb, usage_percentage
@@ -25,13 +25,13 @@ const C = {
   gray: new Color("#8E8E93"),
 };
 
-// Liquid Glass material. Widgets cannot blur, so the material is emulated with a
-// diagonal translucent gradient (bright top-left → clear bottom-right) and a
-// luminous 1pt rim, which reads as glass on both light and dark aurora backdrops.
+// Frosted glass material. Widgets cannot blur, so frost is emulated with a milky,
+// almost uniform translucent fill (only a whisper of vertical falloff), a soft
+// hairline edge and no specular shine — matte rather than glossy.
 const GLASS = {
-  top: Color.dynamic(new Color("#FFFFFF", 0.74), new Color("#FFFFFF", 0.15)),
-  bottom: Color.dynamic(new Color("#FFFFFF", 0.34), new Color("#FFFFFF", 0.04)),
-  rim: Color.dynamic(new Color("#FFFFFF", 0.95), new Color("#FFFFFF", 0.22)),
+  top: Color.dynamic(new Color("#FFFFFF", 0.58), new Color("#FFFFFF", 0.105)),
+  bottom: Color.dynamic(new Color("#FFFFFF", 0.46), new Color("#FFFFFF", 0.075)),
+  rim: Color.dynamic(new Color("#FFFFFF", 0.62), new Color("#FFFFFF", 0.09)),
 };
 
 const ACCENTS = [
@@ -393,12 +393,12 @@ function addSymbol(stack, name, size, color, fallback) {
 function glassGradient(tintHex) {
   const g = new LinearGradient();
   g.colors = tintHex
-    ? [Color.dynamic(new Color(tintHex, 0.22), new Color(tintHex, 0.26)), GLASS.bottom]
+    ? [Color.dynamic(new Color(tintHex, 0.16), new Color(tintHex, 0.17)), Color.dynamic(new Color(tintHex, 0.1), new Color(tintHex, 0.1))]
     : [GLASS.top, GLASS.bottom];
   g.locations = [0, 1];
   try {
-    g.startPoint = new Point(0, 0);
-    g.endPoint = new Point(1, 1);
+    g.startPoint = new Point(0.5, 0);
+    g.endPoint = new Point(0.5, 1);
   } catch (_) {}
   return g;
 }
@@ -411,14 +411,16 @@ function applyGlass(stack, radius, tintHex) {
   return stack;
 }
 
-function auroraBackground() {
+// Diffused, desaturated backdrop — reads like light seen through frosted glass.
+function frostedBackground() {
   const g = new LinearGradient();
   g.colors = [
-    Color.dynamic(new Color("#D9E4FF"), new Color("#060A17")),
-    Color.dynamic(new Color("#F1E6FF"), new Color("#160C2A")),
-    Color.dynamic(new Color("#DDF3FF"), new Color("#03161D")),
+    Color.dynamic(new Color("#D3DAE8"), new Color("#1A1D25")),
+    Color.dynamic(new Color("#E2DCE9"), new Color("#1F1B26")),
+    Color.dynamic(new Color("#DCE3EA"), new Color("#181D22")),
+    Color.dynamic(new Color("#D6DEE6"), new Color("#15191F")),
   ];
-  g.locations = [0, 0.55, 1];
+  g.locations = [0, 0.4, 0.75, 1];
   try {
     g.startPoint = new Point(0, 0);
     g.endPoint = new Point(1, 1);
@@ -446,8 +448,7 @@ function widgetWidth(family) {
 
 function createProgressImage(pct, width, height, hex) {
   // One bitmap for the whole track guarantees the fill starts at x = 0 (nested
-  // stacks can center a very short child). A thin specular strip on top of the
-  // fill gives the liquid, glossy look.
+  // stacks can center a very short child). Matte fill, no highlight.
   const w = Math.max(1, Math.round(width));
   const h = Math.max(1, Math.round(height));
   const ratio = Number.isFinite(pct) ? Math.max(0, Math.min(1, pct / 100)) : 0;
@@ -460,7 +461,7 @@ function createProgressImage(pct, width, height, hex) {
   const track = new Path();
   track.addRoundedRect(new Rect(0, 0, w, h), h / 2, h / 2);
   ctx.addPath(track);
-  ctx.setFillColor(new Color(hex, 0.2));
+  ctx.setFillColor(new Color(hex, 0.16));
   ctx.fillPath();
 
   if (ratio > 0) {
@@ -468,17 +469,8 @@ function createProgressImage(pct, width, height, hex) {
     const fill = new Path();
     fill.addRoundedRect(new Rect(0, 0, fillW, h), h / 2, h / 2);
     ctx.addPath(fill);
-    ctx.setFillColor(new Color(hex));
+    ctx.setFillColor(new Color(hex, 0.92));
     ctx.fillPath();
-
-    if (h >= 4 && fillW > h) {
-      const hh = Math.max(1, h * 0.3);
-      const shine = new Path();
-      shine.addRoundedRect(new Rect(h * 0.4, h * 0.16, fillW - h * 0.8, hh), hh / 2, hh / 2);
-      ctx.addPath(shine);
-      ctx.setFillColor(new Color("#FFFFFF", 0.42));
-      ctx.fillPath();
-    }
   }
   return ctx.getImage();
 }
@@ -510,7 +502,7 @@ function createRingImage(pct, size, lineWidth, hex, trackAlpha) {
   const r = (s - lw) / 2;
   const c = s / 2;
   ctx.setLineWidth(lw);
-  ctx.setStrokeColor(new Color(hex, trackAlpha == null ? 0.2 : trackAlpha));
+  ctx.setStrokeColor(new Color(hex, trackAlpha == null ? 0.16 : trackAlpha));
   ctx.strokeEllipse(new Rect(lw / 2, lw / 2, s - lw, s - lw));
 
   const ratio = Number.isFinite(pct) ? Math.max(0, Math.min(1, pct / 100)) : 0;
@@ -530,16 +522,6 @@ function createRingImage(pct, size, lineWidth, hex, trackAlpha) {
     ctx.setFillColor(new Color(hex));
     for (const a of [start, end]) {
       ctx.fillEllipse(new Rect(c + r * Math.cos(a) - lw / 2, c + r * Math.sin(a) - lw / 2, lw, lw));
-    }
-
-    // Specular highlight riding on the outer edge of the arc.
-    if (lw >= 4 && ratio > 0.04) {
-      const shine = new Path();
-      shine.addLines(arcPoints(c, c, r + lw * 0.18, start + 0.08, end - 0.08, steps));
-      ctx.addPath(shine);
-      ctx.setStrokeColor(new Color("#FFFFFF", 0.45));
-      ctx.setLineWidth(Math.max(1, lw * 0.22));
-      ctx.strokePath();
     }
   }
   return ctx.getImage();
@@ -1032,7 +1014,7 @@ async function buildWidget(cfg, forcedFamily) {
   }
 
   const pairs = allPairs.slice(0, familyLimit(family, cfg));
-  w.backgroundGradient = auroraBackground();
+  w.backgroundGradient = frostedBackground();
 
   if (family === "small") renderSmall(w, pairs, cfg);
   else if (family === "large") renderLarge(w, pairs, allPairs, cfg, param);
@@ -1070,22 +1052,22 @@ function panelHTML(cfg) {
 <style>
 :root{color-scheme:light dark;
  --text:#0b0c10;--sub:rgba(60,60,67,.66);--faint:rgba(60,60,67,.38);
- --base:#eef1fa;--b1:#7ea8ff;--b2:#d29bff;--b3:#6fe3ff;--b4:#ffb4d0;
- --glass-a:rgba(255,255,255,.62);--glass-b:rgba(255,255,255,.26);--rim:rgba(255,255,255,.9);--rim-lo:rgba(255,255,255,.28);
- --shadow:0 12px 36px rgba(40,52,110,.14),0 2px 6px rgba(40,52,110,.06);
- --field:rgba(255,255,255,.55);--field-rim:rgba(255,255,255,.75);--sep:rgba(60,60,67,.12);
+ --base:#e4e8f0;--b1:#8fb0ff;--b2:#d7a8ff;--b3:#8fe0f5;--b4:#ffc1d6;
+ --frost:rgba(250,251,253,.52);--edge:rgba(255,255,255,.55);--grain:.07;
+ --shadow:0 10px 40px rgba(30,40,70,.10),0 1px 3px rgba(30,40,70,.05);
+ --field:rgba(255,255,255,.42);--field-edge:rgba(255,255,255,.5);--sep:rgba(60,60,67,.10);
  --blue:#007aff;--green:#34c759;--orange:#ff9500;--red:#ff3b30}
 @media(prefers-color-scheme:dark){:root{
  --text:#fff;--sub:rgba(235,235,245,.62);--faint:rgba(235,235,245,.32);
- --base:#04060e;--b1:#2346ff;--b2:#8a2cff;--b3:#00b3d6;--b4:#ff2d7a;
- --glass-a:rgba(255,255,255,.14);--glass-b:rgba(255,255,255,.04);--rim:rgba(255,255,255,.26);--rim-lo:rgba(255,255,255,.06);
- --shadow:0 16px 40px rgba(0,0,0,.5),0 2px 8px rgba(0,0,0,.3);
- --field:rgba(255,255,255,.08);--field-rim:rgba(255,255,255,.12);--sep:rgba(255,255,255,.08);
+ --base:#0c0e14;--b1:#2c4fd8;--b2:#7a34d0;--b3:#0f8fae;--b4:#c23a72;
+ --frost:rgba(38,40,48,.50);--edge:rgba(255,255,255,.08);--grain:.10;
+ --shadow:0 14px 44px rgba(0,0,0,.45),0 1px 3px rgba(0,0,0,.3);
+ --field:rgba(255,255,255,.05);--field-edge:rgba(255,255,255,.06);--sep:rgba(255,255,255,.07);
  --blue:#0a84ff;--green:#30d158;--orange:#ff9f0a;--red:#ff453a}}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;min-height:100%}
 body{background:var(--base);color:var(--text);font:15px/1.4 -apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,sans-serif;padding:calc(env(safe-area-inset-top) + 18px) 16px calc(env(safe-area-inset-bottom) + 110px);overflow-x:hidden}
-.aurora{position:fixed;inset:-20%;z-index:-1;pointer-events:none;filter:blur(70px) saturate(140%);opacity:.75}
+.aurora{position:fixed;inset:-20%;z-index:-1;pointer-events:none;filter:blur(90px);opacity:.9}
 .aurora i{position:absolute;border-radius:50%;animation:drift 22s ease-in-out infinite alternate}
 .aurora i:nth-child(1){width:55vw;height:55vw;left:5%;top:2%;background:var(--b1)}
 .aurora i:nth-child(2){width:50vw;height:50vw;right:0;top:20%;background:var(--b2);animation-duration:28s}
@@ -1094,8 +1076,8 @@ body{background:var(--base);color:var(--text);font:15px/1.4 -apple-system,BlinkM
 @keyframes drift{to{transform:translate(6vw,-5vh) scale(1.12)}}
 @media(prefers-reduced-motion:reduce){.aurora i{animation:none}}
 .wrap{max-width:720px;margin:0 auto}
-.glass{position:relative;background:linear-gradient(145deg,var(--glass-a),var(--glass-b));-webkit-backdrop-filter:blur(30px) saturate(190%);backdrop-filter:blur(30px) saturate(190%);border-radius:28px;box-shadow:var(--shadow),inset 0 1px 0 var(--rim),inset 0 -1px 0 var(--rim-lo),inset 1px 0 0 var(--rim-lo)}
-.glass::before{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;padding:1px;background:linear-gradient(160deg,var(--rim),transparent 38%,transparent 65%,var(--rim-lo));-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude}
+.glass{position:relative;isolation:isolate;background:var(--frost);-webkit-backdrop-filter:blur(40px) saturate(150%);backdrop-filter:blur(40px) saturate(150%);border-radius:26px;border:.5px solid var(--edge);box-shadow:var(--shadow)}
+.glass::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;z-index:-1;opacity:var(--grain);background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .5 0 0 0 0 .5 0 0 0 0 .5 0 0 0 1 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");background-size:160px}
 .hero{display:flex;align-items:center;gap:14px;padding:6px 4px 20px}
 .hero .logo{width:54px;height:54px;border-radius:18px;display:grid;place-items:center;flex:none}
 .hero .logo svg{width:28px;height:28px;color:var(--blue)}
@@ -1119,14 +1101,14 @@ body{background:var(--base);color:var(--text);font:15px/1.4 -apple-system,BlinkM
 .meta{font-size:12px;color:var(--sub);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-variant-numeric:tabular-nums}
 .titlecol{flex:1;min-width:0}
 .actions{display:flex;gap:6px;flex:none}
-.cbtn{width:34px;height:34px;border-radius:50%;border:0;display:grid;place-items:center;color:var(--text);background:var(--field);box-shadow:inset 0 1px 0 var(--field-rim),0 1px 3px rgba(0,0,0,.08);transition:transform .15s}
+.cbtn{width:34px;height:34px;border-radius:50%;border:.5px solid var(--field-edge);display:grid;place-items:center;color:var(--text);background:var(--field);transition:transform .15s}
 .cbtn:active{transform:scale(.88)}
 .cbtn svg{width:16px;height:16px}
 .cbtn.del{color:var(--red)}
 .cbtn.del.armed{width:auto;padding:0 12px;border-radius:17px;background:var(--red);color:#fff;font-size:13px;font-weight:700}
-.bar{height:7px;border-radius:4px;background:color-mix(in srgb,var(--c) 18%,transparent);margin:12px 2px 2px;overflow:hidden}
-.bar i{display:block;height:100%;border-radius:4px;background:linear-gradient(180deg,color-mix(in srgb,#fff 35%,var(--c)),var(--c) 60%);box-shadow:0 0 10px color-mix(in srgb,var(--c) 60%,transparent)}
-.fields{margin-top:12px;border-radius:18px;background:var(--field);box-shadow:inset 0 1px 0 var(--field-rim);overflow:hidden}
+.bar{height:6px;border-radius:3px;background:color-mix(in srgb,var(--c) 15%,transparent);margin:12px 2px 2px;overflow:hidden}
+.bar i{display:block;height:100%;border-radius:3px;background:var(--c);opacity:.9}
+.fields{margin-top:12px;border-radius:16px;background:var(--field);border:.5px solid var(--field-edge);overflow:hidden}
 .f{display:flex;align-items:center;gap:10px;padding:0 12px;min-height:46px;border-bottom:1px solid var(--sep)}
 .f:last-child{border-bottom:0}
 .f label{width:46px;flex:none;font-size:13px;color:var(--sub);font-weight:600}
@@ -1144,15 +1126,15 @@ body{background:var(--base);color:var(--text);font:15px/1.4 -apple-system,BlinkM
 .row:last-child{border-bottom:0}
 .row .l b{font-size:15px;font-weight:600;display:block}
 .row .l span{font-size:12px;color:var(--sub)}
-.seg{position:relative;display:flex;padding:3px;border-radius:999px;background:var(--field);box-shadow:inset 0 1px 0 var(--field-rim);margin:12px 16px 4px}
+.seg{position:relative;display:flex;padding:3px;border-radius:999px;background:var(--field);border:.5px solid var(--field-edge);margin:12px 16px 4px}
 .seg button{position:relative;z-index:1;flex:1;border:0;background:transparent;color:var(--text);font-size:13px;font-weight:600;padding:8px 0;border-radius:999px}
-.seg .thumb{position:absolute;z-index:0;top:3px;bottom:3px;left:3px;border-radius:999px;background:linear-gradient(180deg,rgba(255,255,255,.95),rgba(255,255,255,.7));box-shadow:0 3px 10px rgba(0,0,0,.12),inset 0 1px 0 #fff;transition:transform .35s cubic-bezier(.3,1.3,.5,1)}
-@media(prefers-color-scheme:dark){.seg .thumb{background:linear-gradient(180deg,rgba(255,255,255,.3),rgba(255,255,255,.14));box-shadow:0 3px 10px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.35)}}
-.step{display:flex;align-items:center;border-radius:999px;background:var(--field);box-shadow:inset 0 1px 0 var(--field-rim);flex:none}
+.seg .thumb{position:absolute;z-index:0;top:3px;bottom:3px;left:3px;border-radius:999px;background:rgba(255,255,255,.78);box-shadow:0 2px 8px rgba(0,0,0,.08);transition:transform .35s cubic-bezier(.3,1.3,.5,1)}
+@media(prefers-color-scheme:dark){.seg .thumb{background:rgba(255,255,255,.14);box-shadow:0 2px 8px rgba(0,0,0,.3)}}
+.step{display:flex;align-items:center;border-radius:999px;background:var(--field);border:.5px solid var(--field-edge);flex:none}
 .step button{width:34px;height:34px;border:0;background:transparent;color:var(--blue);font-size:20px;font-weight:500;line-height:1}
 .step input{width:46px;border:0;outline:0;background:transparent;text-align:center;color:var(--text);font:600 15px ui-rounded,-apple-system,sans-serif;font-variant-numeric:tabular-nums;-moz-appearance:textfield}
 .step input::-webkit-inner-spin-button,.step input::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
-.zones{position:relative;height:10px;margin:2px 16px 14px;border-radius:5px;overflow:hidden;box-shadow:inset 0 1px 2px rgba(0,0,0,.12)}
+.zones{position:relative;height:8px;margin:2px 16px 14px;border-radius:4px;overflow:hidden;opacity:.85}
 .zones-legend{display:flex;justify-content:space-between;margin:-8px 16px 12px;font-size:11px;color:var(--sub);font-variant-numeric:tabular-nums}
 .sizes{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:12px 16px 14px}
 .size{display:flex;flex-direction:column;align-items:center;gap:6px;font-size:11px;color:var(--sub);font-weight:600}
@@ -1165,7 +1147,8 @@ body{background:var(--base);color:var(--text);font:15px/1.4 -apple-system,BlinkM
 .tip{color:var(--sub);font-size:12px;line-height:1.6;padding:12px 8px 0}
 .tip code{font-family:ui-monospace,Menlo,monospace;color:var(--text)}
 .dock{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom) + 14px);transform:translateX(-50%);display:flex;align-items:center;gap:8px;padding:7px;border-radius:999px;width:min(440px,calc(100% - 32px));z-index:5}
-.dock .add{flex:1;height:46px;border:0;border-radius:999px;color:#fff;font-size:16px;font-weight:700;background:linear-gradient(180deg,color-mix(in srgb,#fff 22%,var(--blue)),var(--blue));box-shadow:0 6px 18px color-mix(in srgb,var(--blue) 45%,transparent),inset 0 1px 0 rgba(255,255,255,.5);transition:transform .15s}
+.dock{background:color-mix(in srgb,var(--base) 72%,transparent)}
+.dock .add{flex:1;height:46px;border:0;border-radius:999px;color:#fff;font-size:16px;font-weight:700;background:color-mix(in srgb,var(--blue) 88%,transparent);transition:transform .15s}
 .dock .add:active{transform:scale(.96)}
 .dock .hint{font-size:11.5px;color:var(--sub);padding:0 10px 0 6px;line-height:1.25;max-width:120px}
 .toast{position:fixed;left:50%;top:calc(env(safe-area-inset-top) + 14px);transform:translate(-50%,-30px);opacity:0;padding:10px 18px;border-radius:999px;font-size:13px;font-weight:600;transition:all .35s cubic-bezier(.3,1.3,.5,1);z-index:9}
